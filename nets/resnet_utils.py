@@ -121,6 +121,21 @@ def conv2d_same(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
         return slim.conv2d(inputs, num_outputs, kernel_size, stride=stride,
                            rate=rate, padding='VALID', scope=scope)
 
+def conv2d_same_batch_normed(inputs, num_outputs, kernel_size, stride, rate=1, scope=None):
+  if stride == 1:
+    conv = slim.conv2d(inputs, num_outputs, kernel_size, stride=1, rate=rate,
+                       padding='SAME', scope=scope)
+    return slim.batch_norm(conv, activation_fn=None, scope=(scope + '_norm'))
+  else:
+    kernel_size_effective = kernel_size + (kernel_size - 1) * (rate - 1)
+    pad_total = kernel_size_effective - 1
+    pad_beg = pad_total // 2
+    pad_end = pad_total - pad_beg
+    inputs = tf.pad(inputs,
+                    [[0, 0], [pad_beg, pad_end], [pad_beg, pad_end], [0, 0]])
+    conv = slim.conv2d(inputs, num_outputs, kernel_size, stride=stride,
+                       rate=rate, padding='VALID', scope=scope)
+    return slim.batch_norm(conv, activation_fn=None, scope=(scope + '_norm'))
 
 @slim.add_arg_scope
 def stack_blocks_dense(net, blocks, output_stride=None,
@@ -221,7 +236,7 @@ def resnet_arg_scope(weight_decay=0.0001,
       use_batch_norm: Whether or not to use batch normalization.
 
     Returns:
-      An `arg_scope` to use for the resnet models.
+      An `arg_scope` to use for the root resnet models.
     """
     batch_norm_params = {
         'decay': batch_norm_decay,

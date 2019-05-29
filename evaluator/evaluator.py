@@ -17,7 +17,8 @@ EvaluatorParams = namedtuple(
      'is_training',  # whether evaluate while training is ongoing
      'eval_train_dataset',  # whether evaluate against training dataset
      'loop',  # whether evaluate in loops
-     'which_checkpoint'  # specify a checkpoint to evaluate
+     'which_checkpoint',  # specify a checkpoint to evaluate
+     'step_eval_interval'
      ])
 # -------------------------------------------------------- #
 # example evaluation parameters
@@ -28,7 +29,8 @@ eval_only_last_ckpt = EvaluatorParams(
     is_training=False,
     eval_train_dataset=False,
     loop=False,
-    which_checkpoint='last'
+    which_checkpoint='last',
+    step_eval_interval=200
 )
 
 
@@ -78,7 +80,7 @@ class Evaluator:
 
         if self.eval_train_dataset:
             image, _, glabels, gbboxes, gdifficults, _, _, _ = \
-                self.g_prepare.get_voc_2007_2012_train_data(is_training_data=False)
+                self.g_prepare.get_voc_2007_train_data(is_training_data=False)
         else:
             image, _, glabels, gbboxes, gdifficults, _, _, _ = self.g_prepare.get_voc_2007_test_data()
 

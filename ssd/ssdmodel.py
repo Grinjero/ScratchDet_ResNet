@@ -26,19 +26,23 @@ class SSDModel:
         """
         if feature_extractor not in nf.base_networks_map:
             raise ValueError('Feature extractor %s unknown.' % feature_extractor)
-        if model_name not in ['ssd300', 'ssd512']:
+        if model_name not in ['ssd300', 'ssd512', 'scratch_det300']:
             raise ValueError('Model %s unknown. Choose either ssd300 or ssd512.' % model_name)
 
         if model_name == 'ssd300':
             self.params = ssd_blocks.ssd300_params
             self._ssd_blocks = ssd_blocks.ssd300
-        else:
+        elif model_name == 'ssd512':
             self.params = ssd_blocks.ssd512_params
             self._ssd_blocks = ssd_blocks.ssd512
+        elif model_name == 'scratch_det300':
+            self.params = ssd_blocks.scratch_det300_params
+            self._ssd_blocks = ssd_blocks.scratch_det300
 
         self.feature_extractor = feature_extractor
         self._feature_extractor = nf.get_base_network_fn(feature_extractor, weight_decay=weight_decay)
-        self.params.feature_layers.insert(0, ssd_blocks.feature_layer[feature_extractor])
+        if feature_extractor in ssd_blocks.feature_layer:
+            self.params.feature_layers.insert(0, ssd_blocks.feature_layer[feature_extractor])
         self.is_training = is_training
         # all of the computed anchors for this model,
         # format: layer_number, numpy array format for x / y / w / h

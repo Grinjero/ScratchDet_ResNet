@@ -65,7 +65,7 @@ def process_image(img, select_threshold=0.3, nms_threshold=.45, net_shape=(512, 
 
 
 # Test on some demo image and visualize output.
-path = '/home/yjin/data/demo/'
+path = 'D:/MachineLearning/datasets/voc_2007/train/VOCdevkit/VOC2007/JPEGImages'
 while True:
     image_name = input('Enter image name: ')
     image_path = Path(path + image_name)

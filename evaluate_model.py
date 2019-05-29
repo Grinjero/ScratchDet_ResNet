@@ -2,12 +2,12 @@ from ssd.ssdmodel import SSDModel
 from trainer.preparedata import PrepareData
 from trainer.postprocessingdata import PostProcessingData
 from evaluator.evaluator import Evaluator
-from experiments import mobilenet_sdd
+from experiments import scratch_det18_voc07
 
 
 if __name__ == '__main__':
-    model_params = mobilenet_sdd.train1_1
-    params = mobilenet_sdd.eval_test_f
+    model_params = scratch_det18_voc07.scratch_det_18_params
+    params = scratch_det18_voc07.eval_test
 
     feature_extractor = model_params.feature_extractor
     model_name = model_params.model_name

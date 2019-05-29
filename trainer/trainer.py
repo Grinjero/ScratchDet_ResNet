@@ -16,6 +16,8 @@ from collections import namedtuple
 
 from ssd import ssdmodel
 
+from evaluator.evaluator import Evaluator
+
 # -------------------------------------------------------- #
 # Definition of the parameter matrix
 TrainerParams = namedtuple(
@@ -71,7 +73,7 @@ tmp_params = TrainerParams(
 class Trainer:
 
     # ============================= PUBLIC METHODS ============================== #
-    def __init__(self, ssd_model, data_preparer, data_postprocessor, params):
+    def __init__(self, ssd_model, data_preparer, data_postprocessor, params, eval_params):
         self.adadelta_rho = 0.95
         self.opt_epsilon = 1.0
         self.adagrad_initial_accumulator_value = 0.1
@@ -117,12 +119,23 @@ class Trainer:
         else:
             raise ValueError('Wrong definition of fine_tune_fe!')
 
+        self.evaluator = self.create_evaluator(eval_params)
+
+    def create_evaluator(self, eval_params):
+        params = eval_params
+
+        ssd_model = self.g_ssd
+        data_preparer = self.g_prepare
+        data_postprocessor = self.g_post
+        self.eval_step_interval = eval_params.step_eval_interval
+        self.ssd_evaluator = Evaluator(ssd_model, data_preparer, data_postprocessor, params)
+
     def start_training(self):
         tf.logging.set_verbosity(tf.logging.DEBUG)
 
         # Get batched training data
         image, filename, glabels, gbboxes, gdifficulties, gclasses, localizations, gscores = \
-            self.g_prepare.get_voc_2007_2012_train_data()
+            self.g_prepare.get_voc_2007_train_data()
         # Get model outputs
         predictions, localisations, logits, end_points = self.g_ssd.get_model(image)
         # Get model training loss
@@ -145,13 +158,25 @@ class Trainer:
             train_op,
             self.train_dir,
             train_step_fn=self._train_step,
-            saver=tf_saver.Saver(max_to_keep=500),
-            init_fn=self._get_init_fn(),
             number_of_steps=self.max_number_of_steps,
             log_every_n_steps=self.log_every_n_steps,
             save_summaries_secs=self.save_summaries_secs,
             save_interval_secs=self.save_interval_secs
         )
+
+        # slim.learning.train(
+        #     train_op,
+        #     self.train_dir,
+        #     train_step_fn=self._train_step,
+        #     saver=tf_saver.Saver(max_to_keep=500),
+        #     init_fn=self._get_init_fn(),
+        #     number_of_steps=self.max_number_of_steps,
+        #     log_every_n_steps=self.log_every_n_steps,
+        #     save_summaries_secs=self.save_summaries_secs,
+        #     save_interval_secs=self.save_interval_secs
+        # )
+
+
 
     # =========================== PRIVATE METHODS ============================ #
     def _train_step(self, sess, train_op, global_step, train_step_kwargs):
@@ -198,6 +223,13 @@ class Trainer:
             should_stop = sess.run(train_step_kwargs['should_stop'])
         else:
             should_stop = False
+
+
+        # periodic performance check on test set
+        if global_step % self.eval_step_interval == 0:
+            self.evaluator.start_evaluation()
+
+
         return total_loss, should_stop
 
     def _get_variables_to_train(self):

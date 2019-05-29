@@ -2,7 +2,35 @@ import tensorflow as tf
 from utils import custom_layers
 from ssd.ssd_utils import SSDParams
 
+from nets import root_resnet_base
+
 slim = tf.contrib.slim
+
+scratch_det300_params = SSDParams(model_name='scratch_det300',
+                          img_shape=(300, 300),
+                          num_classes=21,
+                          no_annotation_label=21,
+                          feature_layers=['root_resnet_18/block4', 'root_resnet_18/block5', 'ssd_block6', 'ssd_block7', 'ssd_block8', 'ssd_block9'],
+                          feature_shapes=[(38, 38), (19, 19), (10, 10), (5, 5), (3, 3), (1, 1)],
+                          anchor_size_bounds=[0.15, 0.90],
+                          anchor_sizes=[(21., 45.),
+                                        (45., 99.),
+                                        (99., 153.),
+                                        (153., 207.),
+                                        (207., 261.),
+                                        (261., 315.)],
+                          anchor_ratios=[[2, .5],
+                                         [2, .5, 3, 1. / 3],
+                                         [2, .5, 3, 1. / 3],
+                                         [2, .5, 3, 1. / 3],
+                                         [2, .5],
+                                         [2, .5]],
+                          anchor_steps=[8, 16, 32, 64, 100, 300],
+                          anchor_offset=0.5,
+                          normalizations=[20, -1, -1, -1, -1, -1],
+                          prior_scaling=[0.1, 0.1, 0.2, 0.2]
+                          )
+
 
 ssd300_params = SSDParams(model_name='ssd300',
                           img_shape=(300, 300),
@@ -83,8 +111,50 @@ feature_layer = {'alexnet_v2': '',
                  'mobilenet_v1_075': 'Conv2d_11_pointwise',
                  'mobilenet_v1_050': 'Conv2d_11_pointwise',
                  'mobilenet_v1_025': 'Conv2d_11_pointwise',
-                 'xception': ''
+                 'xception': '',
                  }
+
+def scratch_det300(net, end_points):
+    """
+    Implementation of the scratch det 300 network.
+
+    The default features layers with 300x300 image input are:
+      conv4 ==> 38 x 38
+      conv7 ==> 19 x 19
+      ssd_block6 ==> 10 x 10
+      ssd_block7 ==> 5 x 5
+      ssd_block8 ==> 3 x 3
+      ssd_block9 ==> 1 x 1
+    The default image size used to train this network is 300x300.
+
+    No prediction and localization layers included!!!
+    """
+
+    # Block 6
+    net = root_resnet_base.feature_ext_residual_unit(net, depth=128, depth_bottleneck=128, stride=2, rate=1, outputs_collections=None,
+                                   scope='ssd_block6')
+    end_points['ssd_block6'] = net
+
+    # Block 7
+    net = root_resnet_base.feature_ext_residual_unit(net, depth=128, depth_bottleneck=128, stride=2, rate=1, outputs_collections=None,
+                                   scope='ssd_block7')
+    end_points['ssd_block7'] = net
+
+    # Block 8
+    net = root_resnet_base.feature_ext_residual_unit(net, depth=128, depth_bottleneck=128, stride=2, rate=1, outputs_collections=None,
+                                   scope='ssd_block8')
+    net = end_points['ssd_block8'] = net
+
+    # Block 9
+    with tf.variable_scope("ssd_block9"):
+        net = slim.conv2d(net, 128, [3, 3], scope='conv1')
+        net = slim.batch_norm(net)
+
+        net = slim.conv2d(net, 128, [3, 3], stride=2, scope='conv2', padding='VALID')
+        net = slim.batch_norm(net)
+
+    end_points['ssd_block9'] = net
+    return net, end_points
 
 
 def ssd300(net, end_points):

@@ -31,6 +31,7 @@ from nets import resnet_v1
 from nets import resnet_v2
 from nets import vgg
 from nets import xception
+from nets import root_resnet_base
 
 slim = tf.contrib.slim
 
@@ -58,7 +59,7 @@ networks_map = {'alexnet_v2': alexnet.alexnet_v2,
                 'mobilenet_v1_075': mobilenet_v1.mobilenet_v1_075,
                 'mobilenet_v1_050': mobilenet_v1.mobilenet_v1_050,
                 'mobilenet_v1_025': mobilenet_v1.mobilenet_v1_025,
-                'xception': xception.xception
+                'xception': xception.xception,
                 }
 
 
@@ -86,7 +87,7 @@ arg_scopes_map = {'alexnet_v2': alexnet.alexnet_v2_arg_scope,
                   'mobilenet_v1_075': mobilenet_v1.mobilenet_v1_arg_scope,
                   'mobilenet_v1_050': mobilenet_v1.mobilenet_v1_arg_scope,
                   'mobilenet_v1_025': mobilenet_v1.mobilenet_v1_arg_scope,
-                  'xception': xception.xception_arg_scope
+                  'xception': xception.xception_arg_scope,
                   }
 
 
@@ -133,13 +134,18 @@ base_networks_map = {'inception_resnet_v2': inception.inception_resnet_v2_base,
                      'vgg_16': vgg.vgg_16_base,
                      'vgg_a': vgg.vgg_a_base,
                      'vgg_19': vgg.vgg_19_base,
-                     'resnet_v1_50': resnet_v1.resnet_v1_50_base
+                     'resnet_v1_50': resnet_v1.resnet_v1_50_base,
+
+                    'root_resnet_18': root_resnet_base.root_resnet_18_base,
+                    'root_resnet_34': root_resnet_base.root_resnet_34_base,
                      }
 
 
 base_arg_scopes_map = {'vgg_16': vgg.vgg_base_arg_scope,
                        'mobilenet_v1': mobilenet_v1.mobilenet_v1_base_arg_scope,
-                       'resnet_v1_50': resnet_v1.resnet_arg_scope
+                       'resnet_v1_50': resnet_v1.resnet_arg_scope,
+                       'root_resnet_18': root_resnet_base.root_resnet_arg_scope,
+                        'root_resnet_34': root_resnet_base.root_resnet_arg_scope,
                        }
 
 
